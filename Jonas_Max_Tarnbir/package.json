@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "tplink-bulbs": "^1.0.1"
+  }
+}
