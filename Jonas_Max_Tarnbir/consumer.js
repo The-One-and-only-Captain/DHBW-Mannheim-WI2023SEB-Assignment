@@ -4,7 +4,7 @@ import 'dotenv/config';
 
 const email = process.env.TPLINK_USERNAME;
 const password = process.env.TPLINK_PASSWORD;
-const deviceIP = '192.168.101.224'; // Ersetze dies durch die lokale IP-Adresse deines Geräts
+const deviceIP = '192.168.101.224';
 
 const lampState = {
   poweredOn: false,
