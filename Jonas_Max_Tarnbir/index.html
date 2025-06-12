@@ -20,21 +20,21 @@
         <div id="result"></div>
         <script>
             function power(state){
-                fetch('/power', {
+                fetch('http://localhost:3000/power', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({value: state})
                 }).then(res => res.text()).then(msg => document.getElementById('result').innerText = msg)
             }
             function setColor(){
-                fetch('/color', {
+                fetch('http://localhost:3000/color', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({value: document.getElementById('color').value})
                 }).then(res => res.text()).then(msg => document.getElementById('result').innerText = msg)
             }
             function setBrightness(){
-                fetch('/brightness', {
+                fetch('http://localhost:3000/brightness', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({value: Number(document.getElementById('brightness').value)})

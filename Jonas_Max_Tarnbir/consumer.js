@@ -1,17 +1,10 @@
 import amqp from 'amqplib';
 import * as TPLink from 'tplink-bulbs';
+import 'dotenv/config';
 
-const email = 'email'
-const password = 'password'
-const deviceIdToFind = 'devideid';
-
-console.log(TPLink)
-
-const cloudApi = await TPLink.API.cloudLogin(email, password);
-
-const devices = await cloudApi.listDevicesByType('SMART.TAPOBULB');
-
-const targetDevice = devices.find(device => device.deviceId === deviceIdToFind);
+const email = process.env.TPLINK_USERNAME;
+const password = process.env.TPLINK_PASSWORD;
+const deviceIP = '192.168.101.224'; // Ersetze dies durch die lokale IP-Adresse deines Geräts
 
 const lampState = {
   poweredOn: false,
@@ -21,21 +14,23 @@ const lampState = {
 
 let device = null;
 
-if (!targetDevice) {
-    console.log(`Device with id "${deviceIdToFind}" not found!`);
-} else {
-    device = await TPLink.API.loginDevice(email, password, targetDevice);
-    const deviceInfo = await device.getDeviceInfo();
-    console.log('Device info:', deviceInfo);
-    lampState.poweredOn = deviceInfo.device_on;
-    lampState.brightness = deviceInfo.brightness;
-    lampState.color = 'unknown';
+try {
+  device = await TPLink.API.loginDeviceByIp(email, password, deviceIP);
 
-    consumeLampCommands();
+  const deviceInfo = await device.getDeviceInfo();
+  console.log('Device info:', deviceInfo);
+
+  lampState.poweredOn = deviceInfo.device_on;
+  lampState.brightness = deviceInfo.brightness;
+  lampState.color = 'unknown'; 
+
+  consumeLampCommands();
+} catch (error) {
+  console.error('Error connecting to the device:', error);
 }
 
 async function consumeLampCommands() {
-  const queueName = 'lamp-commands';
+  const queueName = 'lamp-command'; 
 
   try {
     const connection = await amqp.connect('amqp://localhost');
@@ -50,7 +45,7 @@ async function consumeLampCommands() {
         let cmd;
         try {
           cmd = JSON.parse(rawValue);
-          console.log("JSON", cmd)
+          console.log("JSON", cmd);
         } catch (err) {
           console.error('Invalid JSON message:', rawValue);
           channel.ack(msg);
@@ -78,7 +73,7 @@ async function consumeLampCommands() {
               await device.setBrightness(cmd.value);
               console.log(`Lamp brightness set to ${cmd.value}`);
             } else {
-              console.log('Brightness must be a number between 0 and 100.');
+              console.log('Brightness must be a number between 0 und 100.');
             }
             break;
           case 'color':
