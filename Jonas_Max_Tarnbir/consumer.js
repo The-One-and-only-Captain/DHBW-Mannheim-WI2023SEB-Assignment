@@ -12,6 +12,52 @@ const lampState = {
   color: 'unknown',
 };
 
+const morseTable = {
+  "A": ".-",
+  "B": "-...",
+  "C": "-.-.",
+  "D": "-..",
+  "E": ".",
+  "F": "..-.",
+  "G": "--.",
+  "H": "....",
+  "I": "..",
+  "J": ".---",
+  "K": "-.-",
+  "L": ".-..",
+  "M": "--",
+  "N": "-.",
+  "O": "---",
+  "P": ".--.",
+  "Q": "--.-",
+  "R": ".-.",
+  "S": "...",
+  "T": "-",
+  "U": "..-",
+  "V": "...-",
+  "W": ".--",
+  "X": "-..-",
+  "Y": "-.--",
+  "Z": "--..",
+  "0": "-----",
+  "1": ".----",
+  "2": "..---",
+  "3": "...--",
+  "4": "....-",
+  "5": ".....",
+  "6": "-....",
+  "7": "--...",
+  "8": "---..",
+  "9": "----.",
+  " ": " ",
+  "_": "..--.-",        
+  "@": ".--.-.",       
+  "$": "...-..-",       
+  "&": ".-...",         
+  "(": "-.--.",         
+  ")": "-.--.-" 
+}
+
 let device = null;
 
 try {
@@ -81,6 +127,11 @@ async function consumeLampCommands() {
             await device.setColour(cmd.value);
             console.log(`Lamp color set to ${cmd.value}`);
             break;
+          case 'morse':
+            console.log(`Morscodeblinking starting`);
+            await blinkMorsecode(cmd.value);
+            console.log(`Morscodeblinking finished`);
+            break;
           default:
             console.log(`Unknown command: ${cmd.command}`);
             break;
@@ -92,4 +143,43 @@ async function consumeLampCommands() {
   } catch (error) {
     console.error('Error in consumer:', error);
   }
+}
+
+function textToMorsecode(text){
+  return text.toUpperCase().split('').map( character => morseTable[character] ).join(' ');
+}
+
+function wait(ms){ return new Promise(resolve => setTimeout(resolve, ms)); }
+
+async function blinkMorsecode(text){
+  const DOT =100, DASH=DOT*3,   MORSE_CHARACTER_PAUSE=DOT, LETTER_PAUSE=DOT*3, WORD_PAUSE=DOT*7;
+  const morse = textToMorsecode(text);
+  console.log('Morsecode: '+morse);
+
+  let morseCharacter;
+  for(let i = 0; i<morse.length; i++){
+    morseCharacter = morse[i];
+    switch(morseCharacter){
+      case '.':
+        await device.turnOn();
+        await wait(DOT);
+        await device.turnOff();
+        await wait(MORSE_CHARACTER_PAUSE);
+        break;
+      case '-':
+        await device.turnOn();
+        await wait(DASH);
+        await device.turnOff();
+        await wait(MORSE_CHARACTER_PAUSE);
+        break;
+      case ' ':
+        if(i>0 && morse[i-1] === ' '){
+          await wait(WORD_PAUSE-LETTER_PAUSE);
+        }else{
+          await wait(LETTER_PAUSE);
+        }
+        break;
+    }
+  }
+
 }
