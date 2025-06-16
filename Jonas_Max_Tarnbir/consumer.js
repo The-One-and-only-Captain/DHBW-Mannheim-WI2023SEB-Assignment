@@ -203,6 +203,9 @@ async function blinkMorsecode(text){
         break;
     }
   }
+  if (lampState.poweredOn) {
+    await device.turnOn();
+  }
 
 }
 
