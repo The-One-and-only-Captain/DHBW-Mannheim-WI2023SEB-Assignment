@@ -40,6 +40,16 @@ app.post('/color', async (req, res) =>{
   }
 );
 
+app.post('/morse', async (req, res) =>{
+  if(!channel) return res.status(503).send('RabbitMQ not ready');
+  const { value } = req.body;
+  if(value.match(/^[a-zA-Z0-9_@$&() ]+$/) === null) return res.status(400).send('Unallowed Character Input. Allowed Characters: a-z, A-Z, 0-9 and _@#$%^&*()');
+  const command = { command: 'morse', value: value }
+  const msgBuffer = Buffer.from(JSON.stringify(command));
+  channel.sendToQueue(queueName, msgBuffer)
+  res.send(`Morse command "${value}" sent`);
+});
+
 app.post('/brightness', async (req, res) =>{
     if(!channel) return res.status(503).send('RabbitMQ not ready');
     const { value } = req.body;
