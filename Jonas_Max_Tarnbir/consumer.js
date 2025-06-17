@@ -1,10 +1,11 @@
 import amqp from 'amqplib';
 import * as TPLink from 'tplink-bulbs';
 import 'dotenv/config';
+import { WebSocketServer } from 'ws';
 
 const email = process.env.TPLINK_USERNAME;
 const password = process.env.TPLINK_PASSWORD;
-const deviceIP = '192.168.101.224';
+const deviceIP = '192.168.0.25';
 
 const lampState = {
   poweredOn: false,
@@ -59,17 +60,37 @@ const morseTable = {
 }
 
 let device = null;
+let wss = null;
+let clients = null;
 
 try {
   device = await TPLink.API.loginDeviceByIp(email, password, deviceIP);
 
   const deviceInfo = await device.getDeviceInfo();
-  console.log('Device info:', deviceInfo);
+  //console.log('Device info:', deviceInfo);
 
   lampState.poweredOn = deviceInfo.device_on;
   lampState.brightness = deviceInfo.brightness;
   lampState.color = 'unknown'; 
 
+  openWebSocket();
+  broadcast();
+  
+  wss.on('connection', (ws) => {
+
+    console.log('Client connected');
+    clients.add(ws);
+    ws.send(JSON.stringify(lampState));
+
+    ws.on('close', () => {
+      console.log('Client disconnected');
+      clients.delete(ws);
+    });
+
+  });
+  
+  console.log('Device + WebSocket ready');
+  
   consumeLampCommands();
 } catch (error) {
   console.error('Error connecting to the device:', error);
@@ -138,6 +159,7 @@ async function consumeLampCommands() {
         }
         channel.ack(msg);
         console.log("Current state:", lampState);
+        broadcast();
       }
     });
   } catch (error) {
@@ -182,4 +204,13 @@ async function blinkMorsecode(text){
     }
   }
 
+}
+
+function broadcast() {
+  clients.forEach(c => c.send(JSON.stringify(lampState)));
+}
+
+function openWebSocket() {
+  wss = new WebSocketServer({ port: 8080 });
+  clients = new Set();
 }
