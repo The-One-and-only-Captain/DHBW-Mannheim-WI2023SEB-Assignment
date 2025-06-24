@@ -7,7 +7,8 @@
     <body>
         <h1>Ich bin eine Lampenstatusanzeige</h1>
         
-        <div id="connectionStatus">Nicht verbunden</div>
+        <div id="connectionStatus">WebSocket: Nicht verbunden</div>
+        <div id="lampConnectionStatus">Lampe: Nicht verbunden</div>
         
         <div id="powerStatus">
             <h3>AUS</h3>
@@ -21,11 +22,20 @@
             var socket = new WebSocket('ws://localhost:8080');
             
             socket.onopen = function() {
-                document.getElementById('connectionStatus').textContent = 'Verbunden';
+                document.getElementById('connectionStatus').textContent = 'WebSocket: Verbunden';
             };
             
             socket.onmessage = function(event) {
                 var data = JSON.parse(event.data);
+                
+                var lampStatusDiv = document.getElementById('lampConnectionStatus');
+                if (data.connected) {
+                    lampStatusDiv.textContent = 'Lampe: Verbunden';
+                    lampStatusDiv.style.color = 'green';
+                } else {
+                    lampStatusDiv.textContent = 'Lampe: Nicht verbunden';
+                    lampStatusDiv.style.color = 'red';
+                }
                 
                 var powerDiv = document.getElementById('powerStatus');
                 if (data.poweredOn) {
@@ -42,7 +52,7 @@
             };
             
             socket.onclose = function() {
-                document.getElementById('connectionStatus').textContent = 'Verbindung verloren';
+                document.getElementById('connectionStatus').textContent = 'WebSocket: Verbindung verloren';
             };
         </script>
     </body>
