@@ -55,10 +55,10 @@ node consumer.js
 ```
 Ausgabe sollte sein:
 
-``
-Device + WebSocket ready
-[*] Waiting for messages in: lamp-command
-``
+``Lamp ready``
+
+``WebSocket ready on port 8080``
+
 
 ## Verwendung
 

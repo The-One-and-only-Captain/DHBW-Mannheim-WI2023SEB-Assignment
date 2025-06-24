@@ -11,6 +11,7 @@ const lampState = {
   poweredOn: false,
   brightness: 100,
   color: 'unknown',
+  connected: false
 };
 
 const morseTable = {
@@ -72,29 +73,30 @@ try {
   lampState.poweredOn = deviceInfo.device_on;
   lampState.brightness = deviceInfo.brightness;
   lampState.color = 'unknown'; 
-
-  openWebSocket();
-  broadcast();
+  lampState.connected = true;
   
-  wss.on('connection', (ws) => {
-
-    console.log('Client connected');
-    clients.add(ws);
-    ws.send(JSON.stringify(lampState));
-
-    ws.on('close', () => {
-      console.log('Client disconnected');
-      clients.delete(ws);
-    });
-
-  });
+  console.log('Lamp ready');
   
-  console.log('Device + WebSocket ready');
-  
-  consumeLampCommands();
 } catch (error) {
   console.error('Error connecting to the device:', error);
 }
+
+consumeLampCommands();
+openWebSocket();
+broadcast();
+
+wss.on('connection', (ws) => {
+
+  console.log('Client connected');
+  clients.add(ws);
+  ws.send(JSON.stringify(lampState));
+
+  ws.on('close', () => {
+    console.log('Client disconnected');
+    clients.delete(ws);
+  });
+
+});
 
 async function consumeLampCommands() {
   const queueName = 'lamp-command'; 
@@ -122,13 +124,11 @@ async function consumeLampCommands() {
         switch (cmd.command) {
           case 'on':
             lampState.poweredOn = true;
-            await device.turnOn();
-            console.log('Lamp is now ON');
+            if (device) await device.turnOn();
             break;
           case 'off':
             lampState.poweredOn = false;
-            await device.turnOff();
-            console.log('Lamp is now OFF');
+            if (device) await device.turnOff();
             break;
           case 'brightness':
             if (
@@ -137,7 +137,7 @@ async function consumeLampCommands() {
               cmd.value <= 100
             ) {
               lampState.brightness = cmd.value;
-              await device.setBrightness(cmd.value);
+              if (device) await device.setBrightness(cmd.value);
               console.log(`Lamp brightness set to ${cmd.value}`);
             } else {
               console.log('Brightness must be a number between 0 und 100.');
@@ -145,12 +145,12 @@ async function consumeLampCommands() {
             break;
           case 'color':
             lampState.color = cmd.value;
-            await device.setColour(cmd.value);
+            if (device) await device.setColour(cmd.value);
             console.log(`Lamp color set to ${cmd.value}`);
             break;
           case 'morse':
             console.log(`Morscodeblinking starting`);
-            await blinkMorsecode(cmd.value);
+            if (device) await blinkMorsecode(cmd.value);
             console.log(`Morscodeblinking finished`);
             break;
           default:
@@ -216,4 +216,5 @@ function broadcast() {
 function openWebSocket() {
   wss = new WebSocketServer({ port: 8080 });
   clients = new Set();
+  console.log('WebSocket ready on port 8080');
 }
