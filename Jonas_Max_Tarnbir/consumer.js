@@ -174,7 +174,7 @@ function textToMorsecode(text){
 function wait(ms){ return new Promise(resolve => setTimeout(resolve, ms)); }
 
 async function blinkMorsecode(text){
-  const DOT =100, DASH=DOT*3,   MORSE_CHARACTER_PAUSE=DOT, LETTER_PAUSE=DOT*3, WORD_PAUSE=DOT*7;
+  const DOT =300, DASH=DOT*3,   MORSE_CHARACTER_PAUSE=DOT, LETTER_PAUSE=DOT*3, WORD_PAUSE=DOT*7;
   const morse = textToMorsecode(text);
   console.log('Morsecode: '+morse);
 
